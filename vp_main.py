@@ -19,7 +19,6 @@ index_x, index_y = None, None
 
 # Set up hand state flag
 hand_full = True
-hand_full_threshold = 25
 
 index_thumb_together = False
 
@@ -41,7 +40,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5) a
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = hands.process(image)
 
-        # Extract Hand Landmark Positions
+        # Get Hand Landmark Positions
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(
@@ -51,16 +50,20 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5) a
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style())
 
-                # Extract the Index and Thumb Finger Landmark Positions
+                # Get the Index and Thumb Finger Landmark Positions
                 index_x, index_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image.shape[1]), \
                                    int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image.shape[0])
                 thumb_x, thumb_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x * image.shape[1]), \
                                    int(hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * image.shape[0])
+                # Get Wrist Landmark Position
+                wrist_x, wrist_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].x * image.shape[1]), \
+                                   int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].y * image.shape[0]) 
                 # print(index_x, index_y)
 
                 # Draw a Circle on the Index and Thumb Finger Tips
                 cv2.circle(image, (index_x, index_y), 10, (0, 255, 0), thickness=-1)
                 cv2.circle(image, (thumb_x, thumb_y), 10, (0, 0, 255), thickness=-1)
+                cv2.circle(image, (wrist_x, wrist_y), 10, (0, 0, 255), thickness=-1)
 
                 # Calculate the Distance between the Index and Thumb Finger Tips
                 distance = np.linalg.norm(np.array([index_x, index_y]) - np.array([thumb_x, thumb_y]))
@@ -69,10 +72,8 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5) a
                 # Update the Line Thickness based on the Distance between the Fingers
                 thickness = max(5, int(distance / 10))
 
-                # Determine if the Index and Thumb Fingers are Closed or Opened
-                is_hand_full = distance < 25
 
-                if distance < 35:
+                if distance < 45:
                     index_thumb_together = True
                 else:
                     index_thumb_together = False
@@ -80,17 +81,18 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5) a
                 # Check  if the index finger and thumb are together
                 if index_thumb_together:
                     prev_x, prev_x = index_x, index_y
+                    print("Not drawing")
                 else:
                     # Draw a Line from the Previous Finger Position to the Current One
                     if 'prev_x' in locals() and 'prev_y' in locals():
-                        if is_hand_full:
-                            thickness = max(1, thickness - 2)
-                        else:   
-                            thickness = min(20, thickness + 2)
-                    cv2.line(canvas, (prev_x, prev_y), (index_x, index_y), colors[color_index], thickness)
+                        # if is_hand_full:
+                        #     thickness = max(1, thickness - 2)
+                        # else:   
+                        thickness = min(20, thickness + 2)
+                    cv2.line(canvas, (prev_x, prev_y), (wrist_x, wrist_y), colors[color_index], thickness)
 
                 # Update the Previous Finger Position
-                prev_x, prev_y = index_x, index_y
+                prev_x, prev_y = wrist_x, wrist_y
 
         # Display the Canvas and the Processed Image
         cv2.imshow("Virtual Painting", canvas)
