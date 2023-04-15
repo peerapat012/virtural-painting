@@ -23,11 +23,11 @@ hand_full = True
 
 index_thumb_together = False
 
-with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, max_num_hands = 1) as hands:
-    
+with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, max_num_hands=1) as hands:
+
     # create window
     root = tk.Tk()
-    root.withdraw() # hide the main window
+    root.withdraw()  # hide the main window
 
     # Start Video Stream
     cap = cv2.VideoCapture(0)
@@ -49,10 +49,9 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         if results.multi_hand_landmarks:
 
             if len(results.multi_hand_landmarks) > 1:
-                
+
                 # show window alert
                 messagebox.showinfo("Alert", "Two hands detected !")
-
 
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(
@@ -61,7 +60,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                     mp_hands.HAND_CONNECTIONS,
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style())
-                
+
                 # mp_drawing.draw_landmarks(
                 #     canvas,
                 #     hand_landmarks,
@@ -72,33 +71,36 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
                 # Get the Index and Thumb Finger Landmark Positions
                 index_x, index_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image.shape[1]), \
-                                   int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image.shape[0])
+                    int(
+                        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image.shape[0])
                 thumb_x, thumb_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x * image.shape[1]), \
-                                   int(hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * image.shape[0])
+                    int(
+                        hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * image.shape[0])
                 # Get Wrist Landmark Position
                 wrist_x, wrist_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].x * image.shape[1]), \
-                                   int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].y * image.shape[0]) 
+                    int(
+                        hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].y * image.shape[0])
                 # print("index_x and index_y is :" + str(index_x),str(index_y))
                 # print("thumb_x and thumb_y is :" + str(thumb_x),str(thumb_y))
                 # print("wrist_x and wrist_y is :" + str(wrist_x),str(wrist_y))
 
                 # Draw a Circle on the Index and Thumb Finger Tips
-                cv2.circle(image, (index_x, index_y), 10, (0, 255, 0), thickness=-1)
-                cv2.circle(image, (thumb_x, thumb_y), 10, (0, 0, 255), thickness=-1)
-                cv2.circle(image, (wrist_x, wrist_y), 10, (255, 0, 0), thickness=-1)
+                cv2.circle(image, (index_x, index_y),
+                           10, (0, 255, 0), thickness=-1)
+                cv2.circle(image, (thumb_x, thumb_y),
+                           10, (0, 0, 255), thickness=-1)
+                cv2.circle(image, (wrist_x, wrist_y),
+                           10, (255, 0, 0), thickness=-1)
 
                 prev_x, prev_y = index_x, index_y
 
-
-                
-
                 # Calculate the Distance between the Index and Thumb Finger Tips
-                distance = np.linalg.norm(np.array([index_x, index_y]) - np.array([thumb_x, thumb_y]))
-                print("distance between index finger and thumb finger: " +  str(distance))
+                distance = np.linalg.norm(
+                    np.array([index_x, index_y]) - np.array([thumb_x, thumb_y]))
+                print("distance between index finger and thumb finger: " + str(distance))
 
                 # Update the Line Thickness based on the Distance between the Fingers
                 thickness = max(1, int(distance*2))
-
 
                 if distance < 40:
                     index_thumb_together = True
@@ -113,8 +115,9 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                     # Draw a Line from the Previous Finger Position to the Current One
                     if 'prev_x' in locals() and 'prev_y' in locals():
                         thickness = max(1, int(distance/5))
-                    
-                    cv2.line(canvas, (prev_x, prev_y), (index_x, index_y), colors[color_index], thickness)
+
+                    cv2.line(canvas, (prev_x, prev_y), (index_x,
+                             index_y), colors[color_index], thickness)
 
                 # Update the Previous Finger Position
                 prev_x, prev_y = index_x, index_y
@@ -122,8 +125,6 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         # Display the Canvas and the Processed Image
         cv2.imshow("Virtual Painting", canvas)
         cv2.imshow("Camera", image)
-
-       
 
         # Check for key presses
         key = cv2.waitKey(1)

@@ -10,7 +10,6 @@ while cap.isOpened():
     image = cv2.flip(image, 1)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
 
     cv2.imshow("Camera", image)
 
