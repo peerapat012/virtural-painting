@@ -15,7 +15,6 @@ colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
 color_index = 0
 
 # Initialize Finger Tracking Variables
-prev_x, prev_y = None, None
 thumb_x, thumb_y = None, None
 index_x, index_y = None, None
 
@@ -43,7 +42,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         image = cv2.flip(image, 1)
 
         # Convert the Image from BGR to RGB and Process it with Mediapipe Hands
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = hands.process(image)
 
         # Get Hand Landmark Positions
@@ -62,6 +61,14 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                     mp_hands.HAND_CONNECTIONS,
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style())
+                
+                # mp_drawing.draw_landmarks(
+                #     canvas,
+                #     hand_landmarks,
+                #     mp_hands.HAND_CONNECTIONS,
+                #     mp_drawing_styles.get_default_hand_landmarks_style(),
+                #     mp_drawing_styles.get_default_hand_connections_style()
+                # )
 
                 # Get the Index and Thumb Finger Landmark Positions
                 index_x, index_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image.shape[1]), \
@@ -71,18 +78,23 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                 # Get Wrist Landmark Position
                 wrist_x, wrist_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].x * image.shape[1]), \
                                    int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].y * image.shape[0]) 
-                # print(index_x, index_y)
+                # print("index_x and index_y is :" + str(index_x),str(index_y))
+                # print("thumb_x and thumb_y is :" + str(thumb_x),str(thumb_y))
+                # print("wrist_x and wrist_y is :" + str(wrist_x),str(wrist_y))
 
                 # Draw a Circle on the Index and Thumb Finger Tips
                 cv2.circle(image, (index_x, index_y), 10, (0, 255, 0), thickness=-1)
                 cv2.circle(image, (thumb_x, thumb_y), 10, (0, 0, 255), thickness=-1)
                 cv2.circle(image, (wrist_x, wrist_y), 10, (255, 0, 0), thickness=-1)
 
+                prev_x, prev_y = index_x, index_y
+
+
                 
 
                 # Calculate the Distance between the Index and Thumb Finger Tips
                 distance = np.linalg.norm(np.array([index_x, index_y]) - np.array([thumb_x, thumb_y]))
-                print(distance)
+                print("distance between index finger and thumb finger: " +  str(distance))
 
                 # Update the Line Thickness based on the Distance between the Fingers
                 thickness = max(1, int(distance*2))
@@ -95,17 +107,17 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
                 # Check  if the index finger and thumb are together
                 if index_thumb_together:
-                    prev_x, prev_x = wrist_x, wrist_y
+                    prev_x, prev_x = index_x, index_y
                     print("Not drawing")
                 else:
                     # Draw a Line from the Previous Finger Position to the Current One
                     if 'prev_x' in locals() and 'prev_y' in locals():
                         thickness = max(1, int(distance/5))
                     
-                    cv2.line(canvas, (prev_x, prev_y), (wrist_x, wrist_y), colors[color_index], thickness)
+                    cv2.line(canvas, (prev_x, prev_y), (index_x, index_y), colors[color_index], thickness)
 
                 # Update the Previous Finger Position
-                prev_x, prev_y = wrist_x, wrist_y
+                prev_x, prev_y = index_x, index_y
 
         # Display the Canvas and the Processed Image
         cv2.imshow("Virtual Painting", canvas)
