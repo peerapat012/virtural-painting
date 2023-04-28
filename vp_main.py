@@ -2,7 +2,6 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import tkinter as tk
-from tkinter import messagebox
 
 # Initialize Mediapipe Hands
 mp_drawing = mp.solutions.drawing_utils
@@ -11,7 +10,8 @@ mp_hands = mp.solutions.hands
 
 # Initialize OpenCV Canvas
 canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
-colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
+canvas.fill(255)
+colors = [(0, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
 color_index = 0
 
 # Initialize Finger Tracking Variables
@@ -35,6 +35,8 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
         # Read a Frame from the Video Stream
         success, image = cap.read()
+        MediaBoard = np.zeros((720, 1280, 3), dtype=np.uint8)
+        MediaBoard.fill(255)
         if not success:
             break
 
@@ -47,11 +49,6 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
         # Get Hand Landmark Positions
         if results.multi_hand_landmarks:
-
-            if len(results.multi_hand_landmarks) > 1:
-
-                # show window alert
-                messagebox.showinfo("Alert", "Two hands detected !")
 
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(
@@ -92,7 +89,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                 cv2.circle(image, (wrist_x, wrist_y),
                            10, (255, 0, 0), thickness=-1)
 
-                prev_x, prev_y = index_x, index_y
+                prev_x, prev_y = wrist_x, wrist_y
 
                 # Calculate the Distance between the Index and Thumb Finger Tips
                 distance = np.linalg.norm(
@@ -109,22 +106,25 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
                 # Check  if the index finger and thumb are together
                 if index_thumb_together:
-                    prev_x, prev_x = index_x, index_y
+                    prev_x, prev_x = wrist_x, wrist_y
                     print("Not drawing")
                 else:
                     # Draw a Line from the Previous Finger Position to the Current One
                     if 'prev_x' in locals() and 'prev_y' in locals():
                         thickness = max(1, int(distance/5))
 
-                    cv2.line(canvas, (prev_x, prev_y), (index_x,
-                             index_y), colors[color_index], thickness)
+                    cv2.line(canvas, (prev_x, prev_y), (wrist_x,
+                             wrist_y), colors[color_index], thickness)
 
+                # cv2.line(canvas, (wrist_x, wrist_y), (wrist_x, wrist_y), (255, 0, 0), 10)
                 # Update the Previous Finger Position
-                prev_x, prev_y = index_x, index_y
+                prev_x, prev_y = wrist_x, wrist_y
 
         # Display the Canvas and the Processed Image
-        cv2.imshow("Virtual Painting", canvas)
+        # cv2.imshow("Virtual Painting", canvas)
         cv2.imshow("Camera", image)
+        MediaBoard = cv2.bitwise_and(canvas, MediaBoard)
+        cv2.imshow("Media Board", MediaBoard)
 
         # Check for key presses
         key = cv2.waitKey(1)
@@ -132,6 +132,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
             break
         elif key == ord('c'):
             canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
+            canvas.fill(255)
         elif key == ord('s'):
             cv2.imwrite("painting.jpg", canvas)
         elif key == ord('r'):
