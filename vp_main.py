@@ -2,6 +2,8 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import tkinter as tk
+from datetime import datetime
+import os
 
 # Initialize Mediapipe Hands
 mp_drawing = mp.solutions.drawing_utils
@@ -9,9 +11,9 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
 # Initialize OpenCV Canvas
-canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
-canvas.fill(255)
-colors = [(0, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
+imgCanvas = np.zeros((720, 1280, 3), dtype=np.uint8)
+imgCanvas.fill(255)
+colors = [(0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
 color_index = 0
 
 # Initialize Finger Tracking Variables
@@ -23,6 +25,13 @@ hand_full = True
 
 index_thumb_together = False
 
+current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+file_name = "painting_" + current_time + ".jpg"
+
+directory = "savepicture"
+
+file_path = os.path.join(directory, file_name)
+
 with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, max_num_hands=1) as hands:
 
     # create window
@@ -31,6 +40,8 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
     # Start Video Stream
     cap = cv2.VideoCapture(0)
+    cap.set(3, 1280)
+    cap.set(4, 720)
     while cap.isOpened():
 
         # Read a Frame from the Video Stream
@@ -96,8 +107,6 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                     np.array([index_x, index_y]) - np.array([thumb_x, thumb_y]))
                 print("distance between index finger and thumb finger: " + str(distance))
 
-                # Update the Line Thickness based on the Distance between the Fingers
-                thickness = max(1, int(distance*2))
 
                 if distance < 40:
                     index_thumb_together = True
@@ -113,17 +122,27 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                     if 'prev_x' in locals() and 'prev_y' in locals():
                         thickness = max(1, int(distance/5))
 
-                    cv2.line(canvas, (prev_x, prev_y), (wrist_x,
+                    cv2.line(imgCanvas, (prev_x, prev_y), (wrist_x,
                              wrist_y), colors[color_index], thickness)
 
-                # cv2.line(canvas, (wrist_x, wrist_y), (wrist_x, wrist_y), (255, 0, 0), 10)
+                cv2.line(MediaBoard, (wrist_x, wrist_y), (wrist_x, wrist_y), (0, 0, 255), thickness=10)
                 # Update the Previous Finger Position
                 prev_x, prev_y = wrist_x, wrist_y
 
+        # imgGray = cv2.cvtColor(imgCanvas, cv2.COLOR_BGR2GRAY)
+        # _, imgInv = cv2.threshold(imgGray, 50, 255, cv2.THRESH_BINARY_INV)
+        # imgInv = cv2.cvtColor(imgInv,cv2.COLOR_GRAY2BGR)
+        # image = cv2.bitwise_and(image,imgInv)
+        # image = cv2.bitwise_or(image,imgCanvas)
+
+        # print(image.shape)
+        # print(imgInv.shape)
+
         # Display the Canvas and the Processed Image
-        # cv2.imshow("Virtual Painting", canvas)
+        # cv2.imshow("Virtual Painting", imgCanvas)
         cv2.imshow("Camera", image)
-        MediaBoard = cv2.bitwise_and(canvas, MediaBoard)
+        # cv2.imshow('White', imgInv)
+        MediaBoard = cv2.bitwise_and(imgCanvas, MediaBoard)
         cv2.imshow("Media Board", MediaBoard)
 
         # Check for key presses
@@ -131,10 +150,9 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         if key == ord('q'):
             break
         elif key == ord('c'):
-            canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
-            canvas.fill(255)
+            imgCanvas = np.zeros((720, 1280, 3), dtype=np.uint8)
         elif key == ord('s'):
-            cv2.imwrite("painting.jpg", canvas)
+            cv2.imwrite(file_path, MediaBoard)
         elif key == ord('r'):
             color_index = (color_index + 1) % len(colors)
 
