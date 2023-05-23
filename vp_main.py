@@ -12,7 +12,6 @@ mp_hands = mp.solutions.hands
 
 # Initialize OpenCV Canvas
 imgCanvas = np.zeros((720, 1280, 3), dtype=np.uint8)
-imgCanvas.fill(255)
 colors = [(0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
 color_index = 0
 
@@ -46,8 +45,6 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
 
         # Read a Frame from the Video Stream
         success, image = cap.read()
-        MediaBoard = np.zeros((720, 1280, 3), dtype=np.uint8)
-        MediaBoard.fill(255)
         if not success:
             break
 
@@ -57,6 +54,8 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         # Convert the Image from BGR to RGB and Process it with Mediapipe Hands
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = hands.process(image)
+
+        MediaBoard = np.zeros((720, 1280, 3), dtype=np.uint8)
 
         # Get Hand Landmark Positions
         if results.multi_hand_landmarks:
@@ -108,6 +107,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                 print("distance between index finger and thumb finger: " + str(distance))
 
 
+
                 if distance < 40:
                     index_thumb_together = True
                 else:
@@ -125,25 +125,26 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
                     cv2.line(imgCanvas, (prev_x, prev_y), (wrist_x,
                              wrist_y), colors[color_index], thickness)
 
-                cv2.line(MediaBoard, (wrist_x, wrist_y), (wrist_x, wrist_y), (0, 0, 255), thickness=10)
+                cv2.line(MediaBoard, (wrist_x, wrist_y), (wrist_x, wrist_y), (0, 0, 255), thickness=30)
                 # Update the Previous Finger Position
                 prev_x, prev_y = wrist_x, wrist_y
 
-        # imgGray = cv2.cvtColor(imgCanvas, cv2.COLOR_BGR2GRAY)
-        # _, imgInv = cv2.threshold(imgGray, 50, 255, cv2.THRESH_BINARY_INV)
-        # imgInv = cv2.cvtColor(imgInv,cv2.COLOR_GRAY2BGR)
+        imgGray = cv2.cvtColor(imgCanvas, cv2.COLOR_BGR2GRAY)
+        _, imgInv = cv2.threshold(imgGray, 50, 255, cv2.THRESH_BINARY_INV)
+        imgInv = cv2.cvtColor(imgInv,cv2.COLOR_GRAY2BGR)
         # image = cv2.bitwise_and(image,imgInv)
         # image = cv2.bitwise_or(image,imgCanvas)
-
         # print(image.shape)
         # print(imgInv.shape)
 
         # Display the Canvas and the Processed Image
+
         # cv2.imshow("Virtual Painting", imgCanvas)
         cv2.imshow("Camera", image)
+        MediaBoard = cv2.bitwise_or(imgCanvas, MediaBoard)
+        cv2.imshow('MediaBoard', MediaBoard)
         # cv2.imshow('White', imgInv)
-        MediaBoard = cv2.bitwise_and(imgCanvas, MediaBoard)
-        cv2.imshow("Media Board", MediaBoard)
+
 
         # Check for key presses
         key = cv2.waitKey(1)
@@ -152,7 +153,7 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         elif key == ord('c'):
             imgCanvas = np.zeros((720, 1280, 3), dtype=np.uint8)
         elif key == ord('s'):
-            cv2.imwrite(file_path, MediaBoard)
+            cv2.imwrite(file_path, imgInv)
         elif key == ord('r'):
             color_index = (color_index + 1) % len(colors)
 
