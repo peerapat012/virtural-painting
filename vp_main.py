@@ -4,6 +4,7 @@ import numpy as np
 import tkinter as tk
 from datetime import datetime
 import os
+import time
 
 # Initialize Mediapipe Hands
 mp_drawing = mp.solutions.drawing_utils
@@ -30,6 +31,8 @@ file_name = "painting_" + current_time + ".jpg"
 directory = "savepicture"
 
 file_path = os.path.join(directory, file_name)
+folder = "calli/input"
+counter = 0
 
 with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, max_num_hands=1) as hands:
 
@@ -153,7 +156,9 @@ with mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5, m
         elif key == ord('c'):
             imgCanvas = np.zeros((720, 1280, 3), dtype=np.uint8)
         elif key == ord('s'):
-            cv2.imwrite(file_path, imgInv)
+            counter += 1
+            cv2.imwrite(f'{folder}/Image_Input_{time.time()}.png', imgInv)
+            print(counter)
         elif key == ord('r'):
             color_index = (color_index + 1) % len(colors)
 
